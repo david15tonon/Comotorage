@@ -148,6 +148,10 @@ def rechercher(request):
             'date': date_str,
         }
     }
+    # Ajouter les matchings déjà existants à la demande créée
+    if demande_creee:
+        demande_creee.refresh_from_db()
+
     return render(request, 'APP/rechercher.html', context)
 
 @login_required
