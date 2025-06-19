@@ -264,58 +264,31 @@ def run_matching(request):
         
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
-
 @login_required
 def matching_results(request):
-    """Page d'affichage des résultats de matching"""
     demande_id = request.GET.get('demande_id')
-    
     if not demande_id:
         messages.error(request, 'ID de demande manquant')
         return redirect('rechercher')
     
-    try:
-        demande = get_object_or_404(DemandeCovoiturage, id=demande_id)
-        
-        if demande.passager.user != request.user:
-            messages.error(request, 'Accès non autorisé')
-            return redirect('rechercher')
-        
-        try:
-            from .matching import MatchingAlgorithm
-            matcher = MatchingAlgorithm()
-            matches = matcher.find_matches(demande)
-        except ImportError:
-            # Simulation basique si l'algorithme n'est pas encore implémenté
-            offres = OffreCovoiturage.objects.filter(
-                places_disponibles__gt=0,
-                point_depart__icontains=demande.point_depart[:3]
-            )
-            
-            matches = []
-            for offre in offres:
-                matches.append({
-                    'offre': offre,
-                    'score': 75.0,
-                    'distance_depart': 2.5,
-                    'distance_arrivee': 1.8
-                })
-        
-        # Pagination
-        paginator = Paginator(matches, 5)
-        page_number = request.GET.get('page')
-        page_obj = paginator.get_page(page_number)
-        
-        return render(request, 'APP/matching_results.html', {
-            'demande': demande,
-            'matches': page_obj,
-            'total_matches': len(matches)
-        })
-        
-    except Exception as e:
-        messages.error(request, f'Erreur: {str(e)}')
+    demande = get_object_or_404(DemandeCovoiturage, id=demande_id)
+    
+    if demande.passager.user != request.user:
+        messages.error(request, 'Accès non autorisé')
         return redirect('rechercher')
 
+    # Requête des matchings liés à la demande, avec les relations préchargées
+    matches_qs = Matching.objects.filter(demande=demande).select_related('offre__conducteur').order_by('-score_compatibilite')
+
+    paginator = Paginator(matches_qs, 5)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    return render(request, 'APP/matching_results.html', {
+        'demande': demande,
+        'matches': page_obj,
+        'total_matches': matches_qs.count(),
+    })
 @login_required
 @require_http_methods(["POST"])
 def create_matching(request):

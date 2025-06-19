@@ -23,7 +23,7 @@
             
             {% for match in matches %}
                 <div class="match-card">
-                    <h3>{{ match.offre.conducteur.get_full_name }}</h3>
+                    <h3>{{ match.offre.conducteur }}</h3> <!-- car conducteur est un string ici -->
                     <p><strong>Trajet :</strong> {{ match.offre.point_depart }} → {{ match.offre.point_arrivee }}</p>
                     <p><strong>Heure :</strong> {{ match.offre.heure_depart|date:"d/m/Y H:i" }}</p>
                     <p><strong>Places :</strong> {{ match.offre.places_disponibles }}</p>
