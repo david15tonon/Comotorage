@@ -154,7 +154,7 @@ def rechercher(request):
                 demande_creee = None
                 matching_disponible = False
 
-    # Gestion des filtres GET (point_depart, point_arrivee, date)
+    # Gestion des filtres GET (point_depart, point_arrivee, date) à comprendre
     point_depart = request.GET.get('departure', '').strip()
     point_arrivee = request.GET.get('destination', '').strip()
     date_str = request.GET.get('date', '').strip()
