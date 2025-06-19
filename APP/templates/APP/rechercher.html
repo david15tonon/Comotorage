@@ -7,6 +7,12 @@
     <title>Rechercher un trajet</title>
 
     <link rel="stylesheet" href="{% static 'APP/rechercher.css' %}" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap"
+        rel="stylesheet"
+    />
 </head>
 
 <body>
@@ -25,15 +31,27 @@
                         <h2>Filtres de recherche</h2>
                     </div>
 
-                    <form method="get" action="{% url 'rechercher' %}" class="search-form">
+                    <form method="get" action="{% url 'rechercher' %}" class="search-form" id="search-form">
                         <div class="form-group">
                             <label for="departure">Point de départ</label>
-                            <input type="text" id="departure" name="departure" placeholder="Ex: IFRI-UAC" value="{{ filtres.point_depart }}" />
+                            <input
+                                type="text"
+                                id="departure"
+                                name="departure"
+                                placeholder="Ex: IFRI-UAC"
+                                value="{{ filtres.point_depart }}"
+                            />
                         </div>
 
                         <div class="form-group">
                             <label for="destination">Destination</label>
-                            <input type="text" id="destination" name="destination" placeholder="Ex: Arconville" value="{{ filtres.point_arrivee }}" />
+                            <input
+                                type="text"
+                                id="destination"
+                                name="destination"
+                                placeholder="Ex: Arconville"
+                                value="{{ filtres.point_arrivee }}"
+                            />
                         </div>
 
                         <div class="form-group">
@@ -47,39 +65,63 @@
 
                 <div class="content-grid">
                     <section class="results-section">
-                        <h2>🚗 Offres disponibles</h2>
+                        <h2>Trajets trouvés</h2>
 
-                        {% for offre in offres %}
+                        <div id="initial-state" class="search-state {% if offres %}hidden{% endif %}">
+                            <div class="search-icon">🔍</div>
+                            <p>Lancez une recherche pour voir les trajets disponibles</p>
+                        </div>
+
+                        <div
+                            id="no-results"
+                            class="search-state {% if offres %}hidden{% else %}{% if filtres.point_depart or filtres.point_arrivee or filtres.date %}{% else %}hidden{% endif %}{% endif %}"
+                        >
+                            <div class="search-icon">🔍</div>
+                            <h3>Aucun trajet trouvé</h3>
+                            <p>Essayez de modifier vos critères de recherche</p>
+                            <br />
+                            <a href="{% url 'rechercher' %}" class="clear-btn">Effacer les filtres</a>
+                        </div>
+
+                        <div id="trips-list" class="trajets-list {% if not offres %}hidden{% endif %}">
+                            {% for offre in offres %}
                             <div class="offre-item">
                                 <h3>{{ offre.point_depart }} → {{ offre.point_arrivee }}</h3>
-                                <p><strong>Départ :</strong> {{ offre.heure_depart }}</p>
-                                <p><strong>Places disponibles :</strong> {{ offre.places_disponibles }}</p>
-                                <p><strong>Prix :</strong> {{ offre.prix }} FCFA</p>
-                                <p><strong>Description :</strong> {{ offre.description }}</p>
-                                <p><strong>Conducteur :</strong> {{ offre.conducteur.username }}</p>
+                                <p>Départ : {{ offre.heure_depart|date:"d M Y, H:i" }}</p>
+                                <p>Places disponibles : {{ offre.places_disponibles }}</p>
+                                <p>Prix : {{ offre.prix }} FCFA</p>
+                                <p>Description : {{ offre.description }}</p>
+                                <p>Conducteur : {{ offre.conducteur.username }}</p>
                             </div>
-                        {% empty %}
-                            <p>Aucun trajet trouvé pour ces critères.</p>
-                        {% endfor %}
-
-                        {% if matching_disponible and demande_creee %}
-                            <hr>
-                            <h2>🔎 Offres compatibles avec votre demande</h2>
-
-                            {% for match in demande_creee.matching_set.all %}
-                                <div class="offre-item">
-                                    <h3>{{ match.offre.point_depart }} → {{ match.offre.point_arrivee }}</h3>
-                                    <p><strong>Heure :</strong> {{ match.offre.heure_depart }}</p>
-                                    <p><strong>Places :</strong> {{ match.offre.places_disponibles }}</p>
-                                    <p><strong>Prix :</strong> {{ match.offre.prix }} FCFA</p>
-                                    <p><strong>Score de compatibilité :</strong> {{ match.score_compatibilite|floatformat:1 }}%</p>
-                                    <button onclick="createMatching('{{ match.offre.id }}', '{{ match.demande.id }}')" class="btn btn-primary">
-                                        Réserver ce trajet
-                                    </button>
-                                </div>
                             {% empty %}
-                                <p>Aucun matching trouvé pour votre demande.</p>
                             {% endfor %}
+                        </div>
+
+                        {% if matching_disponible %}
+                        <section class="matching-results">
+                            <h2>Offre(s) compatible(s) trouvée(s)</h2>
+                            {% if matches %}
+                                {% for match in matches %}
+                                    <div class="match-item">
+                                        <h3>{{ match.offre.point_depart }} → {{ match.offre.point_arrivee }}</h3>
+                                        <p>Départ : {{ match.offre.heure_depart|date:"d M Y, H:i" }}</p>
+                                        <p>Places disponibles : {{ match.offre.places_disponibles }}</p>
+                                        <p>Prix : {{ match.offre.prix }} FCFA</p>
+                                        <p>Description : {{ match.offre.description }}</p>
+                                        <p>Conducteur : {{ match.offre.conducteur.username }}</p>
+                                        <p><strong>Score de compatibilité : {{ match.score }}%</strong></p>
+                                        <form method="post" action="{% url 'create_matching' %}" class="reserve-form">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="offre_id" value="{{ match.offre.id }}">
+                                            <input type="hidden" name="demande_id" value="{{ demande_creee.id }}">
+                                            <button type="submit" class="reserve-btn">Réserver ce trajet</button>
+                                        </form>
+                                    </div>
+                                {% endfor %}
+                            {% else %}
+                                <p>Aucun trajet compatible trouvé.</p>
+                            {% endif %}
+                        </section>
                         {% endif %}
                     </section>
 
@@ -88,11 +130,14 @@
                             <h2>Créer une demande de covoiturage</h2>
                             {% if messages %}
                                 {% for message in messages %}
-                                    <p style="color:red;">{{ message }}</p>
+                                    <p class="{% if message.tags %}{{ message.tags }}{% endif %}">{{ message }}</p>
                                 {% endfor %}
                             {% endif %}
                             <form method="post" action="{% url 'rechercher' %}">
                                 {% csrf_token %}
+                                <input type="hidden" id="latitude" name="latitude">
+                                <input type="hidden" id="longitude" name="longitude">
+
                                 <div class="form-group">
                                     <label for="point_depart_demande">Point de départ :</label>
                                     <input type="text" id="point_depart_demande" name="point_depart_demande" required />
@@ -125,31 +170,27 @@
         </main>
     </div>
 
-    <script>
-        function createMatching(offreId, demandeId) {
-            if (!confirm('Confirmer la réservation de ce trajet ?')) return;
+    <div class="end-spacer"></div>
 
-            fetch("{% url 'create_matching' %}", {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': '{{ csrf_token }}'
-                },
-                body: JSON.stringify({
-                    offre_id: offreId,
-                    demande_id: demandeId
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert("Réservation confirmée !");
-                    location.reload();
-                } else {
-                    alert("Erreur : " + data.error);
-                }
-            });
-        }
+    <script>
+        window.onload = function () {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    function (position) {
+                        const lat = position.coords.latitude;
+                        const lon = position.coords.longitude;
+                        document.getElementById('latitude').value = lat;
+                        document.getElementById('longitude').value = lon;
+                        localStorage.setItem("user_lat", lat);
+                        localStorage.setItem("user_lon", lon);
+                    },
+                    function (error) {
+                        console.warn("Géolocalisation refusée ou indisponible");
+                    },
+                    { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+                );
+            }
+        };
     </script>
 </body>
 </html>
