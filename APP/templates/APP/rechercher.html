@@ -1,5 +1,5 @@
-<!DOCTYPE html>
 {% load static %}
+<!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8" />
@@ -10,201 +10,198 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-        href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&family=Montserrat&family=Open+Sans&family=Poppins&display=swap"
         rel="stylesheet"
     />
 </head>
 
 <body>
-    <div class="app">
-        <header class="header">
-            <div class="container">
-                <h1 class="title">Rechercher un Trajet</h1>
-                <p class="subtitle">Trouvez le trajet parfait pour votre destination</p>
-            </div>
-        </header>
+<div class="app">
+    <header class="header">
+        <div class="container">
+            <h1 class="title">Rechercher un Trajet</h1>
+            <p class="subtitle">Trouvez le trajet parfait pour votre destination</p>
+        </div>
+    </header>
 
-        <main class="main-content">
-            <div class="container">
-                <section class="search-section">
-                    <div class="search-header">
-                        <h2>Filtres de recherche</h2>
+    <main class="main-content">
+        <div class="container">
+            <section class="search-section">
+                <form method="get" action="{% url 'rechercher' %}" class="search-form">
+                    <div class="form-group">
+                        <label for="departure">Point de départ</label>
+                        <input type="text" id="departure" name="departure" placeholder="Ex: IFRI-UAC" value="{{ filtres.point_depart }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="destination">Destination</label>
+                        <input type="text" id="destination" name="destination" placeholder="Ex: Arconville" value="{{ filtres.point_arrivee }}">
+                    </div>
+                    <div class="form-group">
+                        <label for="date">Date</label>
+                        <input type="date" id="date" name="date" value="{{ filtres.date }}">
+                    </div>
+                    <button type="submit" class="search-btn">Rechercher</button>
+                </form>
+            </section>
+
+            <div class="content-grid">
+                <section class="results-section">
+                    <div id="initial-state" class="search-state {% if offres or demande_creee %}hidden{% endif %}">
+                        <div class="search-icon">🔍</div>
+                        <p>Lancez une recherche pour voir les trajets disponibles</p>
                     </div>
 
-                    <form method="get" action="{% url 'rechercher' %}" class="search-form">
-                        <div class="form-group">
-                            <label for="departure">Point de départ</label>
-                            <input
-                                type="text"
-                                id="departure"
-                                name="departure"
-                                placeholder="Ex: IFRI-UAC"
-                                value="{{ filtres.point_depart }}"
-                            />
-                        </div>
+                    <div id="no-results" class="search-state {% if offres or demande_creee %}hidden{% else %}{% if filtres.point_depart or filtres.point_arrivee or filtres.date %}{% else %}hidden{% endif %}{% endif %}">
+                        <div class="search-icon">🔍</div>
+                        <h3>Aucun trajet trouvé</h3>
+                        <p>Essayez de modifier vos critères de recherche</p>
+                        <a href="{% url 'rechercher' %}" class="clear-btn">Effacer les filtres</a>
+                    </div>
 
-                        <div class="form-group">
-                            <label for="destination">Destination</label>
-                            <input
-                                type="text"
-                                id="destination"
-                                name="destination"
-                                placeholder="Ex: Arconville"
-                                value="{{ filtres.point_arrivee }}"
-                            />
-                        </div>
+                    {% if demande_creee and matches %}
+                    <div class="match-section">
+                        <h2>🔗 {{ matches|length }} offre(s) compatible(s) trouvée(s)</h2>
+                        {% for match in matches %}
+                        <div class="offre-item">
+                            <span class="badge-match">MATCH</span>
+                            <h3>{{ match.offre.point_depart }} → {{ match.offre.point_arrivee }}</h3>
+                            <p><strong>Départ :</strong> {{ match.offre.heure_depart|date:"d/m/Y H:i" }}</p>
+                            <p><strong>Conducteur :</strong> {{ match.offre.conducteur.get_full_name }}</p>
+                            <p><strong>Places :</strong> {{ match.offre.places_disponibles }}</p>
+                            <p><strong>Prix :</strong> {{ match.offre.prix }} FCFA</p>
+                            {% if match.offre.description %}
+                            <p><strong>Description :</strong> {{ match.offre.description }}</p>
+                            {% endif %}
+                            <p><strong>Score de compatibilité :</strong> {{ match.score|floatformat:1 }}%</p>
 
-                        <div class="form-group">
-                            <label for="date">Date</label>
-                            <input type="date" id="date" name="date" value="{{ filtres.date }}" />
+                            <button class="btn btn-primary" onclick="createMatching('{{ match.offre.id }}', '{{ demande_creee.id }}')">
+                                Réserver ce trajet
+                            </button>
                         </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
 
-                        <button type="submit" class="search-btn">Rechercher</button>
-                    </form>
+                    {% if offres %}
+                    <div class="offres-section">
+                        <h2>🚗 Offres disponibles</h2>
+                        {% for offre in offres %}
+                        <div class="offre-item">
+                            <h3>{{ offre.point_depart }} → {{ offre.point_arrivee }}</h3>
+                            <p>Départ : {{ offre.heure_depart }}</p>
+                            <p>Places disponibles : {{ offre.places_disponibles }}</p>
+                            <p>Prix : {{ offre.prix }} FCFA</p>
+                            <p>Description : {{ offre.description }}</p>
+                            <p>Conducteur : {{ offre.conducteur.get_full_name }}</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
                 </section>
 
-                <div class="content-grid">
-                    <section class="results-section">
-                        <h2>Trajets trouvés</h2>
-
-                        <div id="initial-state" class="search-state {% if offres %}hidden{% endif %}">
-                            <div class="search-icon">🔍</div>
-                            <p>Lancez une recherche pour voir les trajets disponibles</p>
-                        </div>
-
-                        <div
-                            id="no-results"
-                            class="search-state {% if offres %}hidden{% else %}{% if filtres.point_depart or filtres.point_arrivee or filtres.date %}{% else %}hidden{% endif %}{% endif %}"
-                        >
-                            <div class="search-icon">🔍</div>
-                            <h3>Aucun trajet trouvé</h3>
-                            <p>Essayez de modifier vos critères de recherche</p> <br />
-                            <a href="{% url 'rechercher' %}" class="clear-btn">Effacer les filtres</a>
-                        </div>
-
-                        <div id="trips-list" class="trajets-list {% if not offres %}hidden{% endif %}">
-                            {% for offre in offres %}
-                            <div class="offre-item">
-                                <h3>{{ offre.point_depart }} → {{ offre.point_arrivee }}</h3>
-                                <p>Départ: {{ offre.heure_depart }}</p>
-                                <p>Places disponibles: {{ offre.places_disponibles }}</p>
-                                <p>Prix: {{ offre.prix }} Fcfa</p>
-                                <p>Description: {{ offre.description }}</p>
-                                <p>Conducteur: {{ offre.conducteur.username }}</p>
+                <aside class="sidebar">
+                    <section class="demande-section">
+                        <h2>Créer une demande de covoiturage</h2>
+                        {% if error %}
+                        <p style="color:red;">{{ error }}</p>
+                        {% endif %}
+                        <form method="post" action="{% url 'rechercher' %}">
+                            {% csrf_token %}
+                            <input type="hidden" id="latitude" name="latitude">
+                            <input type="hidden" id="longitude" name="longitude">
+                            <div class="form-group">
+                                <label for="point_depart_demande">Point de départ :</label>
+                                <input type="text" id="point_depart_demande" name="point_depart_demande" required>
                             </div>
-                            {% empty %}
-                            {% endfor %}
-                        </div>
+                            <div class="form-group">
+                                <label for="point_arrivee_demande">Destination :</label>
+                                <input type="text" id="point_arrivee_demande" name="point_arrivee_demande" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="heure_souhaitee">Heure souhaitée :</label>
+                                <input type="datetime-local" id="heure_souhaitee" name="heure_souhaitee" required>
+                            </div>
+                            <button type="submit">Créer la demande</button>
+                        </form>
                     </section>
 
-                    <aside class="sidebar">
-                        <div class="filters-section">
-                            <div id="advanced-filters-header" class="filters-header">
-                                <h3>🔧 Filtres avancés</h3>
-                                <span class="arrow">▼</span>
-                            </div>
-
-                            <div id="advanced-filters" class="filters-content">
-                                <div class="form-group">
-                                    <label for="max-price">Prix maximum</label>
-                                    <select id="max-price" name="max_price" form="search-form">
-                                        <option value="">Aucune limite</option>
-                                        <option value="30">300F max</option>
-                                        <option value="50">500F max</option>
-                                        <option value="70">700F max</option>
-                                    </select>
-                                </div>
-
-                                <div class="form-group">
-                                    <label for="departure-time">Heure de départ</label>
-                                    <select id="departure-time" name="departure_time" form="search-form">
-                                        <option value="">Toute heure</option>
-                                        <option value="06:00">Après 6h</option>
-                                        <option value="09:00">Après 9h</option>
-                                        <option value="12:00">Après 12h</option>
-                                        <option value="18:00">Après 18h</option>
-                                    </select>
-                                </div>
-
-                                <div class="form-group">
-                                    <label for="min-rating">Note minimum</label>
-                                    <select id="min-rating" name="min_rating" form="search-form">
-                                        <option value="">Aucune exigence</option>
-                                        <option value="4.0">4.0/5 min</option>
-                                        <option value="4.5">4.5/5 min</option>
-                                        <option value="4.8">4.8/5 min</option>
-                                    </select>
-                                </div>
-                                <br />
-                                <button id="apply-filters" class="apply-btn" type="submit" form="search-form">
-                                    Appliquer les filtres
-                                </button>
+                    <div class="map-section">
+                        <h3>Carte</h3>
+                        <div class="map-placeholder">
+                            <div class="map-content">
+                                <div class="map-icon">🗺️</div>
+                                <p>Carte interactive</p>
+                                <small>Visualisation des trajets</small>
                             </div>
                         </div>
-
-                        <section class="demande-section">
-                            <h2>Créer une demande de covoiturage</h2>
-                            {% if error %}
-                            <p style="color:red;">{{ error }}</p>
-                            {% endif %}
-                            <form method="post" action="{% url 'rechercher' %}">
-                                {% csrf_token %}
-                                <input type="hidden" id="latitude" name="latitude">
-                                <input type="hidden" id="longitude" name="longitude">
-
-                                <div class="form-group">
-                                    <label for="point_depart_demande">Point de départ :</label>
-                                    <input type="text" id="point_depart_demande" name="point_depart_demande" required />
-                                </div>
-                                <div class="form-group">
-                                    <label for="point_arrivee_demande">Destination :</label>
-                                    <input type="text" id="point_arrivee_demande" name="point_arrivee_demande" required />
-                                </div>
-                                <div class="form-group">
-                                    <label for="heure_souhaitee">Heure souhaitée :</label>
-                                    <input type="datetime-local" id="heure_souhaitee" name="heure_souhaitee" required />
-                                </div>
-                                <button type="submit">Créer la demande</button>
-                            </form>
-                        </section>
-
-                        <div class="map-section">
-                            <h3>Carte</h3>
-                            <div class="map-placeholder">
-                                <div class="map-content">
-                                    <div class="map-icon">🗺️</div>
-                                    <p>Carte interactive</p>
-                                    <small>Visualisation des trajets</small>
-                                </div>
-                            </div>
-                        </div>
-                    </aside>
-                </div>
+                    </div>
+                </aside>
             </div>
-        </main>
-    </div>
+        </div>
+    </main>
+</div>
 
-    <div class="end-spacer"></div>
-
-    <script>
-        window.onload = function () {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    function (position) {
-                        const lat = position.coords.latitude;
-                        const lon = position.coords.longitude;
-                        document.getElementById('latitude').value = lat;
-                        document.getElementById('longitude').value = lon;
-                        localStorage.setItem("user_lat", lat);
-                        localStorage.setItem("user_lon", lon);
-                    },
-                    function (error) {
-                        console.warn("Géolocalisation refusée ou indisponible");
-                    },
-                    { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
-                );
+<script>
+    function createMatching(offreId, demandeId) {
+        if (!confirm('Confirmer la réservation de ce trajet ?')) return;
+        fetch("{% url 'create_matching' %}", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": "{{ csrf_token }}"
+            },
+            body: JSON.stringify({ offre_id: offreId, demande_id: demandeId })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                alert("Réservation réussie !");
+                location.reload();
+            } else {
+                alert("Erreur : " + data.error);
             }
-        };
-    </script>
+        })
+        .catch(err => {
+            alert("Erreur de communication");
+            console.error(err);
+        });
+    }
+
+    window.onload = function () {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                function (position) {
+                    document.getElementById('latitude').value = position.coords.latitude;
+                    document.getElementById('longitude').value = position.coords.longitude;
+                },
+                function () {
+                    console.warn("Géolocalisation refusée");
+                }
+            );
+        }
+    };
+</script>
+
+<style>
+    .badge-match {
+        display: inline-block;
+        background-color: #2ecc71;
+        color: white;
+        font-size: 0.75rem;
+        font-weight: bold;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        margin-bottom: 0.5rem;
+    }
+    .btn-primary {
+        margin-top: 0.5rem;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+</style>
 </body>
 </html>
