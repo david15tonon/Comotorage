@@ -31,6 +31,7 @@
                         <h2>Filtres de recherche</h2>
                     </div>
 
+                    <!-- Formulaire filtres GET -->
                     <form method="get" action="{% url 'rechercher' %}" class="search-form" id="search-form">
                         <div class="form-group">
                             <label for="departure">Point de départ</label>
@@ -67,6 +68,7 @@
                     <section class="results-section">
                         <h2>Trajets trouvés</h2>
 
+                        <!-- Message quand aucune offre -->
                         <div id="initial-state" class="search-state {% if offres %}hidden{% endif %}">
                             <div class="search-icon">🔍</div>
                             <p>Lancez une recherche pour voir les trajets disponibles</p>
@@ -90,13 +92,14 @@
                                 <p>Départ : {{ offre.heure_depart|date:"d M Y, H:i" }}</p>
                                 <p>Places disponibles : {{ offre.places_disponibles }}</p>
                                 <p>Prix : {{ offre.prix }} FCFA</p>
-                                <p>Description : {{ offre.description }}</p>
+                                <p>Description : {{ offre.description|default:"-" }}</p>
                                 <p>Conducteur : {{ offre.conducteur.username }}</p>
                             </div>
                             {% empty %}
                             {% endfor %}
                         </div>
 
+                        <!-- Résultats de matching -->
                         {% if matching_disponible and demande_creee %}
                             <h2>Résultats de matching</h2>
                             <ul>
@@ -122,7 +125,6 @@
                             {% endfor %}
                             </ul>
                         {% endif %}
-
                     </section>
 
                     <aside class="sidebar">
@@ -135,6 +137,7 @@
                             {% endif %}
                             <form method="post" action="{% url 'rechercher' %}">
                                 {% csrf_token %}
+                                <!-- Ces inputs cachés peuvent servir pour géolocalisation, si tu l'ajoutes -->
                                 <input type="hidden" id="latitude" name="latitude">
                                 <input type="hidden" id="longitude" name="longitude">
 
