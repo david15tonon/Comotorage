@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="fr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Connexion</title>
+    <link rel="stylesheet" href="{% static 'APP/style.css' %}" />
+</head>
+<body>
+    <div class="container">
+        <h1>Connexion</h1>
+        
+        {% if form.errors %}
+            <p class="error">Nom d'utilisateur ou mot de passe incorrect.</p>
+        {% endif %}
+
+        <form method="POST" action="">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="id_username">Nom d'utilisateur :</label>
+                <input type="text" name="username" id="id_username" required>
+            </div>
+            <div class="form-group">
+                <label for="id_password">Mot de passe :</label>
+                <input type="password" name="password" id="id_password" required>
+            </div>
+
+            <button type="submit" class="primary-btn">Se connecter</button>
+        </form>
+
+        <p>Pas encore de compte ? <a href="{% url 'inscription' %}">Inscrivez-vous ici</a>.</p>
+    </div>
+</body>
+</html>

@@ -1,0 +1,150 @@
+/* Reset et polices */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+}
+
+body {
+    background-color: #f8f9fa;
+    color: #000000;
+    line-height: 1.6;
+}
+
+.container {
+    max-width: 600px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+h1 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #0d0e0f;
+    margin-bottom: 0.5rem;
+}
+
+.subtitle {
+    color: #6c757d;
+    font-size: 1rem;
+    margin-bottom: 2rem;
+    font-weight: 400;
+}
+
+/* Sections du formulaire */
+.form-section {
+    margin-bottom: 1.5rem;
+}
+
+h2 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 1rem;
+}
+
+/* Groupes de formulaire */
+.form-group {
+    margin-bottom: 1.25rem;
+}
+
+label {
+    display: block;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #495057;
+    margin-bottom: 0.5rem;
+}
+
+input[type="text"],
+input[type="number"],
+input[type="datetime-local"],
+select,
+textarea {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1px solid #ced4da;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+    border-color: #259E87;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(73, 213, 211, 0.15);
+}
+
+textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
+/* Checkbox personnalisé */
+.checkbox-group {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.checkbox-group input[type="checkbox"] {
+    width: auto;
+    margin-right: 0.75rem;
+    accent-color: #259E87;
+}
+
+.checkbox-group label {
+    margin-bottom: 0;
+    font-weight: 500;
+}
+
+.datetime-input,
+.price-input {
+    margin-top: 0.5rem;
+}
+
+/* Boutons */
+.buttons {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 2rem;
+}
+
+.primary-btn {
+    background-color: #F4A259;
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.primary-btn:hover {
+    background-color: #f5913b;
+}
+
+/* Séparateur */
+hr {
+    border: 0;
+    height: 1px;
+    background-color: #e9ecef;
+    margin: 1.5rem 0;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+    .container {
+        margin: 1rem;
+        padding: 1.5rem;
+        border-radius: 8px;
+    }
+}

@@ -1,0 +1,331 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ user.get_full_name|default:user.username }} - Profil</title>
+    <link rel="stylesheet" href="{% static 'APP/profile.css' %}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <!-- Header avec informations utilisateur -->
+        <div class="profile-header">
+            <div class="profile-avatar">
+                {% if user.profil.avatar %}
+                    <img src="{{ user.profile.avatar.url }}" alt="Avatar de {{ user.get_full_name|default:user.username }}">
+                {% else %}
+                    <div class="default-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="profile-info">
+                <h1 class="profile-name">{{ user.get_full_name|default:user.username }}</h1>
+                <div class="profile-stats">
+                    <div class="stat-item">
+                        <span class="stat-icon">⭐</span>
+                        <span class="stat-value">0.00</span>
+                        <span class="stat-label">Note</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-icon">🚗</span>
+                        <span class="stat-value">0</span>
+                        <span class="stat-label">Trajets</span>
+                    </div>
+                </div>
+                <div class="profile-contact">
+                    <span class="email">{{ user.email }}</span>
+                    {% if user.profil.phone %}
+                        <span class="phone">{{ user.profile.phone }}</span>
+                    {% endif %}
+                </div>
+                
+                {% if user.profil.is_driver %}
+                    <div class="driver-badge">
+                        <i class="fas fa-car"></i>
+                        <span>Conducteur</span>
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="profile-actions">
+                <button type="button" class="btn-modifier" onclick="toggleEditMode()">
+                    <i class="fas fa-edit"></i>
+                    Modifier
+                </button>
+            </div>
+        </div>
+
+        <!-- Navigation par onglets -->
+        <div class="tabs-navigation">
+            <button class="tab-btn active" data-tab="profil">
+                <i class="fas fa-user"></i>
+                Profil
+            </button>
+            <button class="tab-btn" data-tab="trajets">
+                <i class="fas fa-route"></i>
+                Mes Trajets
+            </button>
+            <button class="tab-btn" data-tab="vehicules">
+                <i class="fas fa-car"></i>
+                Véhicules
+            </button>
+            <button class="tab-btn" data-tab="evaluations">
+                <i class="fas fa-star"></i>
+                Évaluations
+            </button>
+        </div>
+
+        <!-- Contenu des onglets -->
+        <div class="tab-content">
+            <!-- Onglet Profil -->
+            <div class="tab-pane active" id="profil-tab">
+                <form method="POST" enctype="multipart/form-data" class="profile-form" id="profile-form">
+                    {% csrf_token %}
+                    
+                    <div class="form-section">
+                        <h3>Informations personnelles</h3>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="{{ form.bio.id_for_label }}">Biographie</label>
+                                {{ form.bio }}
+                                {% if form.bio.errors %}
+                                    <div class="form-errors">{{ form.bio.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="{{ form.phone.id_for_label }}">Téléphone</label>
+                                {{ form.phone }}
+                                {% if form.phone.errors %}
+                                    <div class="form-errors">{{ form.phone.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="{{ form.avatar.id_for_label }}">Photo de profil</label>
+                                {{ form.avatar }}
+                                {% if form.avatar.errors %}
+                                    <div class="form-errors">{{ form.avatar.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3>Informations de trajet</h3>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="{{ form.depart_location.id_for_label }}">Lieu de départ habituel</label>
+                                {{ form.depart_location }}
+                                {% if form.depart_location.errors %}
+                                    <div class="form-errors">{{ form.depart_location.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="{{ form.heure_depart.id_for_label }}">Heure de départ habituelle</label>
+                                {{ form.heure_depart }}
+                                {% if form.heure_depart.errors %}
+                                    <div class="form-errors">{{ form.heure_depart.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="{{ form.heure_arrivee.id_for_label }}">Heure d'arrivée habituelle</label>
+                                {{ form.heure_arrivee }}
+                                {% if form.heure_arrivee.errors %}
+                                    <div class="form-errors">{{ form.heure_arrivee.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3>Localisation</h3>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="{{ form.latitude.id_for_label }}">Latitude</label>
+                                {{ form.latitude }}
+                                {% if form.latitude.errors %}
+                                    <div class="form-errors">{{ form.latitude.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="{{ form.longitude.id_for_label }}">Longitude</label>
+                                {{ form.longitude }}
+                                {% if form.longitude.errors %}
+                                    <div class="form-errors">{{ form.longitude.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-actions" id="form-actions" style="display: none;">
+                        <button type="submit" class="btn-save">
+                            <i class="fas fa-save"></i>
+                            Enregistrer les modifications
+                        </button>
+                        <button type="button" class="btn-cancel" onclick="toggleEditMode()">
+                            <i class="fas fa-times"></i>
+                            Annuler
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Onglet Mes Trajets -->
+            <div class="tab-pane" id="trajets-tab">
+                <div class="empty-state">
+                    <div class="empty-icon">
+                        <i class="fas fa-route"></i>
+                    </div>
+                    <h3>Mes trajets récents</h3>
+                    <p>Aucun trajet pour le moment</p>
+                    <button class="btn-primary">
+                        <i class="fas fa-plus"></i>
+                        Ajouter un trajet
+                    </button>
+                </div>
+            </div>
+
+            <!-- Onglet Véhicules -->
+            <div class="tab-pane" id="vehicules-tab">
+                {% if user.profil.is_driver %}
+                    <form method="POST" class="vehicle-form">
+                        {% csrf_token %}
+                        <div class="form-section">
+                            <h3>Mon véhicule</h3>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label>Type de conducteur</label>
+                                    {{ form.is_driver }}
+                                    <span class="form-help">Je propose mes services en tant que conducteur</span>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.marque_vehicule.id_for_label }}">Marque du véhicule</label>
+                                    {{ form.marque_vehicule }}
+                                    {% if form.marque_vehicule.errors %}
+                                        <div class="form-errors">{{ form.marque_vehicule.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.modele_vehicule.id_for_label }}">Modèle du véhicule</label>
+                                    {{ form.modele_vehicule }}
+                                    {% if form.modele_vehicule.errors %}
+                                        <div class="form-errors">{{ form.modele_vehicule.errors }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="{{ form.places_disponibles.id_for_label }}">Places disponibles</label>
+                                    {{ form.places_disponibles }}
+                                    {% if form.places_disponibles.errors %}
+                                        <div class="form-errors">{{ form.places_disponibles.errors }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                {% else %}
+                    <div class="empty-state">
+                        <div class="empty-icon">
+                            <i class="fas fa-car"></i>
+                        </div>
+                        <h3>Véhicules</h3>
+                        <p>Vous n'êtes pas encore conducteur</p>
+                        <button class="btn-primary" onclick="document.getElementById('{{ form.is_driver.id_for_label }}').checked = true;">
+                            <i class="fas fa-plus"></i>
+                            Devenir conducteur
+                        </button>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Onglet Évaluations -->
+            <div class="tab-pane" id="evaluations-tab">
+                <div class="empty-state">
+                    <div class="empty-icon">
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <h3>Évaluations</h3>
+                    <p>Aucune évaluation pour le moment</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Gestion des onglets
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                // Désactiver tous les onglets
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+                
+                // Activer l'onglet cliqué
+                this.classList.add('active');
+                const tabId = this.getAttribute('data-tab') + '-tab';
+                document.getElementById(tabId).classList.add('active');
+            });
+        });
+
+        // Mode édition
+        function toggleEditMode() {
+            const form = document.getElementById('profile-form');
+            const actions = document.getElementById('form-actions');
+            const inputs = form.querySelectorAll('input, textarea, select');
+            const isEditing = form.classList.contains('editing');
+            
+            if (isEditing) {
+                // Passer en mode lecture
+                form.classList.remove('editing');
+                actions.style.display = 'none';
+                
+                inputs.forEach(input => {
+                    if (input.type !== 'hidden') {
+                        input.setAttribute('readonly', true);
+                        input.setAttribute('disabled', true);
+                    }
+                });
+                
+                // Changer le texte du bouton
+                document.querySelector('.btn-modifier').innerHTML = '<i class="fas fa-edit"></i> Modifier';
+            } else {
+                // Passer en mode édition
+                form.classList.add('editing');
+                actions.style.display = 'flex';
+                
+                inputs.forEach(input => {
+                    if (input.type !== 'hidden') {
+                        input.removeAttribute('readonly');
+                        input.removeAttribute('disabled');
+                    }
+                });
+                
+                // Changer le texte du bouton
+                document.querySelector('.btn-modifier').innerHTML = '<i class="fas fa-times"></i> Annuler';
+            }
+        }
+
+        // Désactiver les champs en mode lecture au chargement
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('profile-form');
+            const inputs = form.querySelectorAll('input, textarea, select');
+            
+            inputs.forEach(input => {
+                if (input.type !== 'hidden') {
+                    input.setAttribute('readonly', true);
+                    input.setAttribute('disabled', true);
+                }
+            });
+        });
+    </script>
+</body>
+</html>

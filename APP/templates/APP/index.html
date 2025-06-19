@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="{% static 'APP/Style.css' %}">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&family=Montserrat:ital,wght@0,100..900;1,100..900&family=Open+Sans:ital,wght@0,300..800;1,300..800&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <script src="https://maps.googleapis.com/maps/api/js?key=VOTRE_CLE_API&callback=initMap" async defer></script>
+
+</head>
+<body>
+    <div class="container">
+        <aside class="sidebar">
+            <h2 class="name">DRIVE ME</h2>
+            <ul class="menu">
+                <li class="moi">
+                    <a href="">
+                        <i class="fa-solid fa-chart-line"></i> Tableau de bord
+                    </a>
+                </li>
+                <li class="moi">
+                    <a href="{% url 'publier' %}">
+                        <i class="fas fa-plus-circle"></i> Publier un trajet
+                    </a>
+                </li>
+                <li class="moi">
+                    <a href="">
+                        <i class="fas fa-magnifying-glass-location"></i> Rechercher
+                    </a>
+                </li>
+                <li class="moi">
+                    <a href="">
+                        <i class="fas fa-comments"></i> Messagerie
+                    </a>
+                </li>
+                <li class="moi">
+                    <a href="">
+                        <i class="fas fa-bell"></i> Notifications
+                    </a>
+                </li>
+                <li class="moi">
+                    <a href="">
+                        <i class="fas fa-user"></i> Profil
+                    </a>
+                </li>
+                <li class="moi">
+                    <a href="">
+                        <i class="fas fa-gear"></i> Paramètres
+                    </a>
+                </li>
+                <li class="moi">
+                    <a href="{% url 'deconnexion' %}"">
+                        <i class="fas fa-arrow-right-from-bracket"></i> Déconnexion
+                    </a>
+                </li>
+            </ul>
+        </aside>  
+        
+        
+        <header class="topbar">
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+            <input type="text" placeholder="Rechercher un trajet, un utilisateur..." />
+                </div>
+
+            <div class="topbar-right">
+                <a href=""><i class="fas fa-bell"></i></a>
+                <a href=""></a><img src="https://via.placeholder.com/36" alt="Profil" class="avatar" /></a>
+            </div>
+        </header>
+
+        <aside class="main-content">
+            <div class="card-wide fade in">
+                <h2>Bienvenue sur Drive Me</h2>
+                <p>Voici votre tableau de bord personnalisé</p>
+            </div>
+
+            <div class="card-grid">
+                <div class="card-stat fade in" style="--card-color: #20c997;">
+                  <h3>Trajets publiés</h3>
+                  <p>Aucun trajet pour le moment</p>
+                </div>
+                <div class="card-stat fade in" style="--card-color: #0dcaf0;">
+                  <h3>Passagers rencontrés</h3>
+                  <p>0</p>
+                </div>
+                <div class="card-stat fade in" style="--card-color: #ffc107;">
+                  <h3>Kilomètres parcourus</h3>
+                  <p>0 km</p>
+                </div>
+            </div>
+
+            
+            <!-- Section Trajets Disponibles -->
+            <div class="content-section">
+                <h3>Trajets disponibles</h3>
+                
+                <!-- Cas avec trajets (à remplacer dynamiquement) -->
+                <div class="trips-grid">
+                    <!-- Exemple de trajet 1 -->
+                    <div class="trip-card">
+                        <h4>Cotonou → IFRI</h4>
+                        <div class="trip-meta">
+                            <span>15 juin 2025</span>
+                            <span>08:00</span>
+                        </div>
+                        <div class="trip-meta">
+                            <span>3h30</span>
+                            <span class="trip-seats">2 places restantes</span>
+                        </div>
+                        <p>Départ de Gbégamey</p>
+                        <button class="btn">Réserver</button>
+                    </div>
+                    
+                    <!-- Exemple de trajet 2 -->
+                    <div class="trip-card">
+                        <h4>IFRI → Fidjrossè</h4>
+                        <div class="trip-meta">
+                            <span>17 juin 2025</span>
+                            <span>14:30</span>
+                        </div>
+                        <div class="trip-meta">
+                            <span>3h00</span>
+                            <span class="trip-seats">1 place restante</span>
+                        </div>
+                        <p>Départ de l'EPAC, arrêts possibles</p>
+                        <button class="btn">Réserver</button>
+                    </div>
+                </div>
+                
+                <!-- Cas sans trajets (à afficher conditionnellement) -->
+                <!--
+                <div class="empty-state">
+                    Aucun trajet disponible pour le moment.
+                </div>
+                -->
+            </div>
+
+            <div class="content-section">
+                <h3>Carte de mes trajets</h3>
+                <div class="map-container">
+                    <!-- Intégration Google Maps API ici -->
+                    <div style="height: 100%; display: flex; align-items: center; justify-content: center; background: #f0f0f0; border-radius: 5px;">
+                        [Carte Google Maps intégrée]
+                    </div>
+                </div>
+            </div>
+
+            <section class="bottom">
+            <div class="content-section">
+                <h3>Mes prochains trajets</h3>
+                <!-- Conditionnelle pour afficher "Aucun" si vide -->
+                <div class="empty-state">
+                    Aucun trajet à venir pour l'instant.
+                </div>
+            </div>
+            </section>
+            </div>
+        </aside>
+    </div>
+
+     <!-- ESPACE FINAL -->
+     <div class="end-spacer"></div>
+
+    
+      
+</body>
+</html>

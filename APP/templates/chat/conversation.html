@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<h2>Conversation avec{{destinataire.username}}</h2>
+
+<div class="messages" style= "border:1px solid #ccc; padding:10px;max-height:400px; overflow-y:auto;">{%for message in messages %}
+    <div style="margin: 10px 0;{% if message.sender == request.user %}; text-align : right; {% endif %}">
+        <strong>{{ mesage.sender.username}}:</strong> 
+        {% if message.est_like %} 👍 {% else %}
+        {{message.content}} {% endif %} {%if message.est_vu % }
+        <small style="color: :green;">(vu)  </small>{% endif %}
+    </div>
+    
+    {% endfor %} 
+</div>
+
+<hr>
+<form method="POST" action="{% url'envoyer_message'destinataire.id %}"> {% csrf_token % }
+    <input type="hidden" name="destinataire_id" value="{{autre_user.id}}">
+    <textarea name="contenu" rows="2" placeholder="Votre mesage..." style="width: 100%;"></textarea><br>
+    <button type="submit">Envoyer</button>
+    <button type="submit" name="like" value="true">👍 Like</button>
+
+</form>
+<br> <a href="{%url 'liste_conversations' %}"> Retour a la liste</a>
+{% endblock %}
