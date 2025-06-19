@@ -44,14 +44,23 @@ def index(request):
 
 def accueil(request):
     return render(request, 'APP/accueil.html', {'information': ""})
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render
+from django.utils.dateparse import parse_datetime
+from django.contrib import messages
+from datetime import datetime
+from .models import OffreCovoiturage, DemandeCovoiturage, Profile
+from .matching import MatchingAlgorithm  # supposé exister
+from math import fabs
 
 @login_required
 def rechercher(request):
     offres = OffreCovoiturage.objects.filter(places_disponibles__gt=0)
     demande_creee = None
     matching_disponible = False
+    matches = []  # liste des résultats de matching à retourner au template
 
-    # Récupération des filtres dans GET (recherche)
+    # Récupération des filtres GET
     point_depart = request.GET.get('departure', '').strip()
     point_arrivee = request.GET.get('destination', '').strip()
     date_str = request.GET.get('date', '').strip()
@@ -61,29 +70,24 @@ def rechercher(request):
     if point_arrivee:
         offres = offres.filter(point_arrivee__icontains=point_arrivee)
     if date_str:
-        # on filtre par date (date only)
         try:
-            from datetime import datetime
             date = datetime.strptime(date_str, "%Y-%m-%d").date()
             offres = offres.filter(heure_depart__date=date)
         except ValueError:
             pass
 
-    # Gestion création demande via POST
+    # Gestion de la création de demande (POST)
     if request.method == 'POST':
-        # On récupère les champs depuis le formulaire HTML (inputs non-Django)
         point_depart_demande = request.POST.get('point_depart_demande', '').strip()
         point_arrivee_demande = request.POST.get('point_arrivee_demande', '').strip()
         heure_souhaitee_str = request.POST.get('heure_souhaitee', '').strip()
 
-        # Validation basique
         if point_depart_demande and point_arrivee_demande and heure_souhaitee_str:
             try:
                 heure_souhaitee = parse_datetime(heure_souhaitee_str)
                 if heure_souhaitee is None:
                     raise ValueError("Format datetime invalide")
-                
-                # Création de la demande liée au profil utilisateur
+
                 profile, created = Profile.objects.get_or_create(user=request.user)
                 demande_creee = DemandeCovoiturage.objects.create(
                     passager=profile,
@@ -91,14 +95,12 @@ def rechercher(request):
                     point_arrivee=point_arrivee_demande,
                     heure_souhaitee=heure_souhaitee,
                 )
-                
-                # Géocoder automatiquement les adresses (optionnel)
+
+                # Géocodage optionnel
                 try:
-                    from .matching import MatchingAlgorithm
                     matcher = MatchingAlgorithm()
                     coords_depart = matcher.get_coordinates(point_depart_demande)
                     coords_arrivee = matcher.get_coordinates(point_arrivee_demande)
-                    
                     demande_creee.latitude_depart = coords_depart[0]
                     demande_creee.longitude_depart = coords_depart[1]
                     demande_creee.latitude_arrivee = coords_arrivee[0]
@@ -106,10 +108,30 @@ def rechercher(request):
                     demande_creee.save()
                 except Exception as e:
                     print(f"Erreur géocodage: {e}")
-                
+
+                # MATCHING AVEC SCORE
                 matching_disponible = True
-                messages.success(request, "Demande créée avec succès ! Vous pouvez maintenant chercher des matches.")
-                
+                for offre in OffreCovoiturage.objects.filter(places_disponibles__gt=0):
+                    score = 0
+
+                    if offre.point_depart.lower() == point_depart_demande.lower():
+                        score += 40
+                    if offre.point_arrivee.lower() == point_arrivee_demande.lower():
+                        score += 40
+                    try:
+                        delta_heure = abs((offre.heure_depart - heure_souhaitee).total_seconds()) / 3600
+                        if delta_heure <= 1:
+                            score += 20
+                        elif delta_heure <= 2:
+                            score += 10
+                    except:
+                        pass
+
+                    if score >= 60:
+                        matches.append({'offre': offre, 'score': round(score, 1)})
+
+                messages.success(request, "Demande créée avec succès ! Résultats de matching disponibles.")
+
             except Exception as e:
                 messages.error(request, f"Erreur lors de la création de la demande: {e}")
         else:
@@ -119,6 +141,7 @@ def rechercher(request):
         'offres': offres,
         'demande_creee': demande_creee,
         'matching_disponible': matching_disponible,
+        'matches': matches,
         'filtres': {
             'point_depart': point_depart,
             'point_arrivee': point_arrivee,
