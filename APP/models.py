@@ -33,29 +33,60 @@ class Profile(models.Model):
         return f"{self.user.first_name} {self.user.last_name} - {self.user.email}"
 
 
+import uuid
+from django.db import models
+from django.contrib.auth.models import User
 
 class OffreCovoiturage(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
     conducteur = models.ForeignKey(User, on_delete=models.CASCADE)
     point_depart = models.CharField(max_length=255)
     point_arrivee = models.CharField(max_length=255)
     heure_depart = models.DateTimeField()
     places_disponibles = models.PositiveIntegerField()
-    prix = models.DecimalField(max_digits=8, decimal_places=2, default=0)  # <-- Ajoute ce champ
-    description = models.TextField(blank=True, null=True)  # <-- Ajoute ce champ
+    prix = models.DecimalField(max_digits=8, decimal_places=2, default=0)
+    description = models.TextField(blank=True, null=True)
+
+    latitude_depart = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
+    longitude_depart = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
+    latitude_arrivee = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
+    longitude_arrivee = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
+
+    STATUS_CHOICES = [
+        ('active', 'Active'),
+        ('completed', 'Terminée'),
+        ('cancelled', 'Annulée'),
+    ]
+    statut = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
 
     def __str__(self):
         return f"{self.conducteur.username} - {self.point_depart} vers {self.point_arrivee}"
 
 class DemandeCovoiturage(models.Model):
-    passager = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='demandes')
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+
+    passager = models.ForeignKey('Profile', on_delete=models.CASCADE, related_name='demandes')
     point_depart = models.CharField(max_length=255)
     point_arrivee = models.CharField(max_length=255)
     heure_souhaitee = models.DateTimeField()
     date_publication = models.DateTimeField(auto_now_add=True)
 
+    latitude_depart = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
+    longitude_depart = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
+    latitude_arrivee = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
+    longitude_arrivee = models.DecimalField(max_digits=9, decimal_places=6, blank=True, null=True)
+
+    STATUS_CHOICES = [
+        ('active', 'Active'),
+        ('matched', 'Matching trouvé'),
+        ('completed', 'Terminée'),
+        ('cancelled', 'Annulée'),
+    ]
+    statut = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active')
+
     def __str__(self):
         return f"Demande de {self.passager.user.get_full_name()} - {self.point_depart} à {self.point_arrivee}"
-
 
 class Matching(models.Model):
     offre = models.ForeignKey(OffreCovoiturage, on_delete=models.CASCADE)
@@ -64,7 +95,9 @@ class Matching(models.Model):
     date_matching = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Match entre {self.offre.conducteur.user.get_full_name()} et {self.demande.passager.user.get_full_name()}"
+        conducteur = self.offre.conducteur.get_full_name() or self.offre.conducteur.username
+        passager = self.demande.passager.user.get_full_name() or self.demande.passager.user.username
+        return f"Match entre {conducteur} et {passager}"
 
 
 class Message(models.Model):

@@ -1,0 +1,174 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Résultats de Matching - Nawa</title>
+    <link rel="stylesheet" href="{% static 'APP/Style.css' %}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <h1><i class="fas fa-search"></i> Résultats de Matching</h1>
+        
+        <div class="demand-info">
+            <h2>Votre demande</h2>
+            <p><strong>Trajet :</strong> {{ demande.point_depart }} → {{ demande.point_arrivee }}</p>
+            <p><strong>Heure souhaitée :</strong> {{ demande.heure_souhaitee|date:"d/m/Y H:i" }}</p>
+        </div>
+
+        {% if matches %}
+            <h2>{{ total_matches }} offre(s) compatible(s) trouvée(s)</h2>
+            
+            {% for match in matches %}
+                <div class="match-card">
+                    <h3>{{ match.offre.conducteur.get_full_name }}</h3>
+                    <p><strong>Trajet :</strong> {{ match.offre.point_depart }} → {{ match.offre.point_arrivee }}</p>
+                    <p><strong>Heure :</strong> {{ match.offre.heure_depart|date:"d/m/Y H:i" }}</p>
+                    <p><strong>Places :</strong> {{ match.offre.places_disponibles }}</p>
+                    <p><strong>Prix :</strong> {{ match.offre.prix }} FCFA</p>
+                    <p><strong>Score de compatibilité :</strong> {{ match.score|floatformat:1 }}%</p>
+                    
+                    {% if match.offre.description %}
+                        <p><strong>Description :</strong> {{ match.offre.description }}</p>
+                    {% endif %}
+                    
+                    <button onclick="createMatching({{ match.offre.id }}, {{ demande.id }})" class="btn btn-primary">
+                        Réserver ce trajet
+                    </button>
+                </div>
+            {% endfor %}
+            
+            <!-- Pagination si nécessaire -->
+            {% if matches.has_other_pages %}
+                <div class="pagination">
+                    {% if matches.has_previous %}
+                        <a href="?page={{ matches.previous_page_number }}&demande_id={{ demande.id }}">&laquo; Précédent</a>
+                    {% endif %}
+                    
+                    <span class="current">
+                        Page {{ matches.number }} sur {{ matches.paginator.num_pages }}
+                    </span>
+                    
+                    {% if matches.has_next %}
+                        <a href="?page={{ matches.next_page_number }}&demande_id={{ demande.id }}">Suivant &raquo;</a>
+                    {% endif %}
+                </div>
+            {% endif %}
+        {% else %}
+            <div class="no-matches">
+                <h2>Aucune offre compatible trouvée</h2>
+                <p>Essayez d'élargir vos critères de recherche ou attendez que de nouvelles offres soient publiées.</p>
+                <a href="{% url 'rechercher' %}" class="btn btn-primary">Retour à la recherche</a>
+            </div>
+        {% endif %}
+    </div>
+
+    <script>
+        function createMatching(offreId, demandeId) {
+            if (!confirm('Confirmer la réservation de ce trajet ?')) {
+                return;
+            }
+            
+            fetch('{% url "create_matching" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({
+                    offre_id: offreId,
+                    demande_id: demandeId
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Réservation confirmée ! Le conducteur sera notifié.');
+                    location.reload();
+                } else {
+                    alert('Erreur: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Erreur:', error);
+                alert('Erreur lors de la réservation');
+            });
+        }
+    </script>
+
+    <style>
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .demand-info {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+        }
+        
+        .match-card {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .match-card:hover {
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+        
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #0056b3;
+        }
+        
+        .no-matches {
+            text-align: center;
+            padding: 2rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .pagination {
+            text-align: center;
+            margin-top: 2rem;
+        }
+        
+        .pagination a {
+            padding: 0.5rem 1rem;
+            margin: 0 0.25rem;
+            border: 1px solid #ddd;
+            color: #007bff;
+            text-decoration: none;
+            border-radius: 4px;
+        }
+        
+        .pagination .current {
+            padding: 0.5rem 1rem;
+            margin: 0 1rem;
+            font-weight: bold;
+        }
+    </style>
+</body>
+</html>
