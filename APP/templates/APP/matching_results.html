@@ -22,24 +22,22 @@
             <h2>{{ total_matches }} offre(s) compatible(s) trouvée(s)</h2>
             
             {% for match in matches %}
-                <div class="match-card">
-                    <h3>{{ match.offre.conducteur }}</h3> <!-- car conducteur est un string ici -->
-                    <p><strong>Trajet :</strong> {{ match.offre.point_depart }} → {{ match.offre.point_arrivee }}</p>
-                    <p><strong>Heure :</strong> {{ match.offre.heure_depart|date:"d/m/Y H:i" }}</p>
-                    <p><strong>Places :</strong> {{ match.offre.places_disponibles }}</p>
-                    <p><strong>Prix :</strong> {{ match.offre.prix }} FCFA</p>
-                    <p><strong>Score de compatibilité :</strong> {{ match.score|floatformat:1 }}%</p>
-                    
-                    {% if match.offre.description %}
-                        <p><strong>Description :</strong> {{ match.offre.description }}</p>
-                    {% endif %}
-                    
-                    <button onclick="createMatching('{{ match.offre.id }}', '{{ demande.id }}')" class="btn btn-primary"></button>
-                        Réserver ce trajet
-                    </button>
-                </div>
-            {% endfor %}
-            
+    <div class="match-card">
+        <h3>{{ match.offre.conducteur.get_full_name }}</h3>
+        <p><strong>Trajet :</strong> {{ match.offre.point_depart }} → {{ match.offre.point_arrivee }}</p>
+        <p><strong>Heure :</strong> {{ match.offre.heure_depart|date:"d/m/Y H:i" }}</p>
+        <p><strong>Places :</strong> {{ match.offre.places_disponibles }}</p>
+        <p><strong>Prix :</strong> {{ match.offre.prix }} FCFA</p>
+        <p><strong>Score de compatibilité :</strong> {{ match.score_compatibilite|floatformat:1 }}%</p>
+        {% if match.offre.description %}
+            <p><strong>Description :</strong> {{ match.offre.description }}</p>
+        {% endif %}
+        <button onclick="createMatching('{{ match.offre.id }}', '{{ demande.id }}')" class="btn btn-primary">
+            Réserver ce trajet
+        </button>
+    </div>
+{% endfor %}
+
             <!-- Pagination si nécessaire -->
             {% if matches.has_other_pages %}
                 <div class="pagination">
