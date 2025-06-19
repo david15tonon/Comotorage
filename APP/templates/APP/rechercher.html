@@ -97,32 +97,32 @@
                             {% endfor %}
                         </div>
 
-                        {% if matching_disponible %}
-                        <section class="matching-results">
-                            <h2>Offre(s) compatible(s) trouvée(s)</h2>
-                            {% if matches %}
-                                {% for match in matches %}
-                                    <div class="match-item">
-                                        <h3>{{ match.offre.point_depart }} → {{ match.offre.point_arrivee }}</h3>
-                                        <p>Départ : {{ match.offre.heure_depart|date:"d M Y, H:i" }}</p>
-                                        <p>Places disponibles : {{ match.offre.places_disponibles }}</p>
-                                        <p>Prix : {{ match.offre.prix }} FCFA</p>
-                                        <p>Description : {{ match.offre.description }}</p>
-                                        <p>Conducteur : {{ match.offre.conducteur.username }}</p>
-                                        <p><strong>Score de compatibilité : {{ match.score }}%</strong></p>
-                                        <form method="post" action="{% url 'create_matching' %}" class="reserve-form">
-                                            {% csrf_token %}
-                                            <input type="hidden" name="offre_id" value="{{ match.offre.id }}">
-                                            <input type="hidden" name="demande_id" value="{{ demande_creee.id }}">
-                                            <button type="submit" class="reserve-btn">Réserver ce trajet</button>
-                                        </form>
-                                    </div>
-                                {% endfor %}
-                            {% else %}
-                                <p>Aucun trajet compatible trouvé.</p>
-                            {% endif %}
-                        </section>
+                        {% if matching_disponible and demande_creee %}
+                            <h2>Résultats de matching</h2>
+                            <ul>
+                            {% for match in matches %}
+                                <li>
+                                    <strong>{{ match.offre.point_depart }} → {{ match.offre.point_arrivee }}</strong><br>
+                                    Départ : {{ match.offre.heure_depart|date:"j F Y, H:i" }}<br>
+                                    Places disponibles : {{ match.offre.places_disponibles }}<br>
+                                    Prix : {{ match.offre.prix }} FCFA<br>
+                                    Score de compatibilité : {{ match.score }} %<br>
+                                    Conducteur : {{ match.offre.conducteur.username }}<br>
+                                    Description : {{ match.offre.description|default:"-" }}<br>
+
+                                    <form method="post" action="{% url 'create_matching' %}">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="offre_id" value="{{ match.offre.id }}">
+                                        <input type="hidden" name="demande_id" value="{{ demande_creee.id }}">
+                                        <button type="submit" class="btn btn-primary">Réserver ce trajet</button>
+                                    </form>
+                                </li>
+                            {% empty %}
+                                <li>Aucun trajet compatible trouvé.</li>
+                            {% endfor %}
+                            </ul>
                         {% endif %}
+
                     </section>
 
                     <aside class="sidebar">
