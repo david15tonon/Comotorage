@@ -1,12 +1,12 @@
 {% load static %}
 <!DOCTYPE html>
 <html lang="fr">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rechercher un Trajet</title>
-    <link rel="stylesheet" href="{% static 'APP/rechercher.css' %}">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Rechercher un trajet</title>
+
+    <link rel="stylesheet" href="{% static 'APP/rechercher.css' %}" />
 </head>
 
 <body>
@@ -21,124 +21,135 @@
         <main class="main-content">
             <div class="container">
                 <section class="search-section">
+                    <div class="search-header">
+                        <h2>Filtres de recherche</h2>
+                    </div>
+
                     <form method="get" action="{% url 'rechercher' %}" class="search-form">
                         <div class="form-group">
                             <label for="departure">Point de départ</label>
-                            <input type="text" id="departure" name="departure" placeholder="Ex: IFRI-UAC" value="{{ filtres.point_depart }}">
+                            <input type="text" id="departure" name="departure" placeholder="Ex: IFRI-UAC" value="{{ filtres.point_depart }}" />
                         </div>
 
                         <div class="form-group">
                             <label for="destination">Destination</label>
-                            <input type="text" id="destination" name="destination" placeholder="Ex: Arconville" value="{{ filtres.point_arrivee }}">
+                            <input type="text" id="destination" name="destination" placeholder="Ex: Arconville" value="{{ filtres.point_arrivee }}" />
                         </div>
 
                         <div class="form-group">
                             <label for="date">Date</label>
-                            <input type="date" id="date" name="date" value="{{ filtres.date }}">
+                            <input type="date" id="date" name="date" value="{{ filtres.date }}" />
                         </div>
 
                         <button type="submit" class="search-btn">Rechercher</button>
                     </form>
                 </section>
 
-                {% if messages %}
-                    <ul class="messages">
-                        {% for message in messages %}
-                            <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
-                        {% endfor %}
-                    </ul>
-                {% endif %}
+                <div class="content-grid">
+                    <section class="results-section">
+                        <h2>🚗 Offres disponibles</h2>
 
-                {% if demande_creee and matches %}
-                    <section class="matched-results">
-                        <h2>{{ matches|length }} offre(s) compatible(s) trouvée(s)</h2>
-                        {% for item in matches %}
-                            <div class="offre-item compatible">
-                                <h3>{{ item.offre.point_depart }} → {{ item.offre.point_arrivee }}</h3>
-                                <p>Départ : {{ item.offre.heure_depart }}</p>
-                                <p>Places disponibles : {{ item.offre.places_disponibles }}</p>
-                                <p>Prix : {{ item.offre.prix }} FCFA</p>
-                                <p>Score de compatibilité : <strong>{{ item.score }}%</strong></p>
-                                <form method="post" action="{% url 'reserver_offre' item.offre.id %}">
-                                    {% csrf_token %}
-                                    <button type="submit" class="reserver-btn">Réserver ce trajet</button>
-                                </form>
+                        {% for offre in offres %}
+                            <div class="offre-item">
+                                <h3>{{ offre.point_depart }} → {{ offre.point_arrivee }}</h3>
+                                <p><strong>Départ :</strong> {{ offre.heure_depart }}</p>
+                                <p><strong>Places disponibles :</strong> {{ offre.places_disponibles }}</p>
+                                <p><strong>Prix :</strong> {{ offre.prix }} FCFA</p>
+                                <p><strong>Description :</strong> {{ offre.description }}</p>
+                                <p><strong>Conducteur :</strong> {{ offre.conducteur.username }}</p>
                             </div>
+                        {% empty %}
+                            <p>Aucun trajet trouvé pour ces critères.</p>
                         {% endfor %}
+
+                        {% if matching_disponible and demande_creee %}
+                            <hr>
+                            <h2>🔎 Offres compatibles avec votre demande</h2>
+
+                            {% for match in demande_creee.matching_set.all %}
+                                <div class="offre-item">
+                                    <h3>{{ match.offre.point_depart }} → {{ match.offre.point_arrivee }}</h3>
+                                    <p><strong>Heure :</strong> {{ match.offre.heure_depart }}</p>
+                                    <p><strong>Places :</strong> {{ match.offre.places_disponibles }}</p>
+                                    <p><strong>Prix :</strong> {{ match.offre.prix }} FCFA</p>
+                                    <p><strong>Score de compatibilité :</strong> {{ match.score_compatibilite|floatformat:1 }}%</p>
+                                    <button onclick="createMatching('{{ match.offre.id }}', '{{ match.demande.id }}')" class="btn btn-primary">
+                                        Réserver ce trajet
+                                    </button>
+                                </div>
+                            {% empty %}
+                                <p>Aucun matching trouvé pour votre demande.</p>
+                            {% endfor %}
+                        {% endif %}
                     </section>
-                {% endif %}
 
-                <section class="results-section">
-                    <h2>🚗 Offres disponibles</h2>
-                    {% for offre in offres %}
-                        <div class="offre-item">
-                            <h3>{{ offre.point_depart }} → {{ offre.point_arrivee }}</h3>
-                            <p>Départ : {{ offre.heure_depart }}</p>
-                            <p>Places disponibles : {{ offre.places_disponibles }}</p>
-                            <p>Prix : {{ offre.prix }} FCFA</p>
-                            <p>Description : {{ offre.description }}</p>
-                            <p>Conducteur : {{ offre.conducteur.username }}</p>
-                        </div>
-                    {% empty %}
-                        <p>Aucune offre disponible.</p>
-                    {% endfor %}
-                </section>
+                    <aside class="sidebar">
+                        <section class="demande-section">
+                            <h2>Créer une demande de covoiturage</h2>
+                            {% if messages %}
+                                {% for message in messages %}
+                                    <p style="color:red;">{{ message }}</p>
+                                {% endfor %}
+                            {% endif %}
+                            <form method="post" action="{% url 'rechercher' %}">
+                                {% csrf_token %}
+                                <div class="form-group">
+                                    <label for="point_depart_demande">Point de départ :</label>
+                                    <input type="text" id="point_depart_demande" name="point_depart_demande" required />
+                                </div>
+                                <div class="form-group">
+                                    <label for="point_arrivee_demande">Destination :</label>
+                                    <input type="text" id="point_arrivee_demande" name="point_arrivee_demande" required />
+                                </div>
+                                <div class="form-group">
+                                    <label for="heure_souhaitee">Heure souhaitée :</label>
+                                    <input type="datetime-local" id="heure_souhaitee" name="heure_souhaitee" required />
+                                </div>
+                                <button type="submit">Créer la demande</button>
+                            </form>
+                        </section>
 
-                <section class="demande-section">
-                    <h2>Créer une demande de covoiturage</h2>
-                    <form method="post" action="{% url 'rechercher' %}">
-                        {% csrf_token %}
-                        <input type="hidden" id="latitude" name="latitude">
-                        <input type="hidden" id="longitude" name="longitude">
-
-                        <div class="form-group">
-                            <label for="point_depart_demande">Point de départ :</label>
-                            <input type="text" id="point_depart_demande" name="point_depart_demande" required>
+                        <div class="map-section">
+                            <h3>Carte</h3>
+                            <div class="map-placeholder">
+                                <div class="map-content">
+                                    <div class="map-icon">🗺️</div>
+                                    <p>Carte interactive</p>
+                                    <small>Visualisation des trajets</small>
+                                </div>
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label for="point_arrivee_demande">Destination :</label>
-                            <input type="text" id="point_arrivee_demande" name="point_arrivee_demande" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="heure_souhaitee">Heure souhaitée :</label>
-                            <input type="datetime-local" id="heure_souhaitee" name="heure_souhaitee" required>
-                        </div>
-                        <button type="submit">Créer la demande</button>
-                    </form>
-                </section>
-
-                <div class="map-section">
-                    <h3>Carte</h3>
-                    <div class="map-placeholder">
-                        <div class="map-content">
-                            <div class="map-icon">🗌</div>
-                            <p>Carte interactive</p>
-                            <small>Visualisation des trajets</small>
-                        </div>
-                    </div>
+                    </aside>
                 </div>
             </div>
         </main>
     </div>
 
     <script>
-        window.onload = function () {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    function (position) {
-                        document.getElementById('latitude').value = position.coords.latitude;
-                        document.getElementById('longitude').value = position.coords.longitude;
-                        localStorage.setItem("user_lat", position.coords.latitude);
-                        localStorage.setItem("user_lon", position.coords.longitude);
-                    },
-                    function (error) {
-                        console.warn("Géolocalisation refusée ou indisponible");
-                    },
-                    { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
-                );
-            }
-        };
+        function createMatching(offreId, demandeId) {
+            if (!confirm('Confirmer la réservation de ce trajet ?')) return;
+
+            fetch("{% url 'create_matching' %}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: JSON.stringify({
+                    offre_id: offreId,
+                    demande_id: demandeId
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert("Réservation confirmée !");
+                    location.reload();
+                } else {
+                    alert("Erreur : " + data.error);
+                }
+            });
+        }
     </script>
 </body>
-
 </html>
