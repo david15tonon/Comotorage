@@ -44,6 +44,8 @@ def index(request):
 
 def accueil(request):
     return render(request, 'APP/accueil.html', {'information': ""})
+
+# Rechercher 
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 from django.utils.dateparse import parse_datetime
@@ -58,25 +60,8 @@ def rechercher(request):
     offres = OffreCovoiturage.objects.filter(places_disponibles__gt=0)
     demande_creee = None
     matching_disponible = False
-    matches = []  # liste des résultats de matching à retourner au template
+    matches = []
 
-    # Récupération des filtres GET
-    point_depart = request.GET.get('departure', '').strip()
-    point_arrivee = request.GET.get('destination', '').strip()
-    date_str = request.GET.get('date', '').strip()
-
-    if point_depart:
-        offres = offres.filter(point_depart__icontains=point_depart)
-    if point_arrivee:
-        offres = offres.filter(point_arrivee__icontains=point_arrivee)
-    if date_str:
-        try:
-            date = datetime.strptime(date_str, "%Y-%m-%d").date()
-            offres = offres.filter(heure_depart__date=date)
-        except ValueError:
-            pass
-
-    # Gestion de la création de demande (POST)
     if request.method == 'POST':
         point_depart_demande = request.POST.get('point_depart_demande', '').strip()
         point_arrivee_demande = request.POST.get('point_arrivee_demande', '').strip()
@@ -109,11 +94,13 @@ def rechercher(request):
                 except Exception as e:
                     print(f"Erreur géocodage: {e}")
 
-                # MATCHING AVEC SCORE
+                # Stocker la demande dans la session pour affichage en GET
+                request.session['demande_id'] = demande_creee.id
                 matching_disponible = True
+
+                # Calcul des matches
                 for offre in OffreCovoiturage.objects.filter(places_disponibles__gt=0):
                     score = 0
-
                     if offre.point_depart.lower() == point_depart_demande.lower():
                         score += 40
                     if offre.point_arrivee.lower() == point_arrivee_demande.lower():
@@ -137,6 +124,52 @@ def rechercher(request):
         else:
             messages.error(request, "Tous les champs de la demande doivent être remplis.")
 
+    else:
+        # En GET, tenter de récupérer la demande créée en session pour afficher les matches
+        demande_id = request.session.get('demande_id')
+        if demande_id:
+            try:
+                demande_creee = DemandeCovoiturage.objects.get(id=demande_id, passager__user=request.user)
+                matching_disponible = True
+
+                for offre in OffreCovoiturage.objects.filter(places_disponibles__gt=0):
+                    score = 0
+                    if offre.point_depart.lower() == demande_creee.point_depart.lower():
+                        score += 40
+                    if offre.point_arrivee.lower() == demande_creee.point_arrivee.lower():
+                        score += 40
+                    try:
+                        delta_heure = abs((offre.heure_depart - demande_creee.heure_souhaitee).total_seconds()) / 3600
+                        if delta_heure <= 1:
+                            score += 20
+                        elif delta_heure <= 2:
+                            score += 10
+                    except:
+                        pass
+
+                    if score >= 60:
+                        matches.append({'offre': offre, 'score': round(score, 1)})
+
+            except DemandeCovoiturage.DoesNotExist:
+                demande_creee = None
+                matching_disponible = False
+
+    # Gestion des filtres GET (point_depart, point_arrivee, date)
+    point_depart = request.GET.get('departure', '').strip()
+    point_arrivee = request.GET.get('destination', '').strip()
+    date_str = request.GET.get('date', '').strip()
+
+    if point_depart:
+        offres = offres.filter(point_depart__icontains=point_depart)
+    if point_arrivee:
+        offres = offres.filter(point_arrivee__icontains=point_arrivee)
+    if date_str:
+        try:
+            date = datetime.strptime(date_str, "%Y-%m-%d").date()
+            offres = offres.filter(heure_depart__date=date)
+        except ValueError:
+            pass
+
     context = {
         'offres': offres,
         'demande_creee': demande_creee,
@@ -148,9 +181,6 @@ def rechercher(request):
             'date': date_str,
         }
     }
-    # Ajouter les matchings déjà existants à la demande créée
-    if demande_creee:
-        demande_creee.refresh_from_db()
 
     return render(request, 'APP/rechercher.html', context)
 
