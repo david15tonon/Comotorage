@@ -34,7 +34,7 @@
                         <p><strong>Description :</strong> {{ match.offre.description }}</p>
                     {% endif %}
                     
-                    <button onclick="createMatching({{ match.offre.id }}, {{ demande.id }})" class="btn btn-primary">
+                    <button onclick="createMatching('{{ match.offre.id }}', '{{ demande.id }}')" class="btn btn-primary"></button>
                         Réserver ce trajet
                     </button>
                 </div>
